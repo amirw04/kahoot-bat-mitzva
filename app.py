@@ -1,0 +1,276 @@
+import random
+import socket
+import string
+import time
+import os
+
+from flask import Flask, jsonify, render_template, request, send_from_directory
+
+from DataQuestions import questions_list
+
+
+app = Flask(__name__)
+
+
+def make_game_code():
+    letters = string.ascii_uppercase.replace("I", "").replace("O", "")
+    return "".join(random.choice(letters + "23456789") for _ in range(4))
+
+
+def get_local_ip():
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(("8.8.8.8", 80))
+        ip_address = sock.getsockname()[0]
+        sock.close()
+        return ip_address
+    except OSError:
+        return "localhost"
+
+
+def make_question_payload(question, number):
+    answers = list(question.AnsF) + [question.AnsT]
+    random.shuffle(answers)
+    return {
+        "number": number,
+        "text": question.Qstn,
+        "answers": answers,
+        "image": question.Image,
+        "timer": question.Timer,
+    }
+
+
+def new_game():
+    return {
+        "code": make_game_code(),
+        "players": {},
+        "question_index": 0,
+        "question": None,
+        "revealed_answers": 0,
+        "phase": "lobby",
+        "correct_answer": None,
+        "timer_end": None,
+        "scored": False,
+    }
+
+
+game = new_game()
+
+
+def remaining_seconds():
+    if game["timer_end"] is None:
+        return None
+    return max(0, int(game["timer_end"] - time.time()))
+
+
+def refresh_timer():
+    if game["phase"] == "timer" and remaining_seconds() == 0:
+        game["phase"] = "timer_done"
+        game["timer_end"] = None
+
+
+def public_state():
+    refresh_timer()
+    return {
+        "code": game["code"],
+        "phase": game["phase"],
+        "questionIndex": game["question_index"],
+        "totalQuestions": len(questions_list),
+        "question": game["question"],
+        "revealedAnswers": game["revealed_answers"],
+        "correctAnswer": game["correct_answer"],
+        "remainingSeconds": remaining_seconds(),
+        "players": [
+            {
+                "id": player_id,
+                "name": player["name"],
+                "score": player["score"],
+                "answered": player["answer"] is not None,
+                "answer": player["answer"],
+            }
+            for player_id, player in game["players"].items()
+        ],
+    }
+
+
+def reset_player_answers():
+    for player in game["players"].values():
+        player["answer"] = None
+
+
+def show_question():
+    if game["question_index"] >= len(questions_list):
+        game["phase"] = "finished"
+        game["question"] = None
+        return
+
+    question = questions_list[game["question_index"]]
+    game["question"] = make_question_payload(question, game["question_index"] + 1)
+    game["revealed_answers"] = 0
+    game["phase"] = "question"
+    game["correct_answer"] = None
+    game["timer_end"] = None
+    game["scored"] = False
+    reset_player_answers()
+
+
+def show_correct_answer():
+    if not game["question"]:
+        return
+
+    question = questions_list[game["question_index"]]
+    game["phase"] = "review"
+    game["timer_end"] = None
+    game["correct_answer"] = question.AnsT
+
+    if game["scored"]:
+        return
+
+    for player in game["players"].values():
+        if player["answer"] == question.AnsT:
+            player["score"] += 1
+    game["scored"] = True
+
+
+@app.route("/")
+def index():
+    return render_template("host.html")
+
+
+@app.route("/host")
+def host():
+    return render_template("host.html")
+
+
+@app.route("/player")
+def player():
+    return render_template("player.html")
+
+
+@app.route("/images/<path:filename>")
+def images(filename):
+    return send_from_directory("images", filename)
+
+
+@app.get("/api/state")
+def api_state():
+    return jsonify(public_state())
+
+
+@app.post("/api/host/new-game")
+def api_new_game():
+    game.clear()
+    game.update(new_game())
+    return jsonify(public_state())
+
+
+@app.post("/api/host/show-question")
+def api_show_question():
+    show_question()
+    return jsonify(public_state())
+
+
+@app.post("/api/host/reveal-answer")
+def api_reveal_answer():
+    if game["question"] and game["phase"] not in ("timer", "review", "finished"):
+        total_answers = len(game["question"]["answers"])
+        game["revealed_answers"] = min(total_answers, game["revealed_answers"] + 1)
+    return jsonify(public_state())
+
+
+@app.post("/api/host/start-timer")
+def api_start_timer():
+    if game["question"] and game["phase"] not in ("timer", "review", "finished"):
+        game["phase"] = "timer"
+        game["timer_end"] = time.time() + int(game["question"]["timer"])
+    return jsonify(public_state())
+
+
+@app.post("/api/host/show-correct")
+def api_show_correct():
+    show_correct_answer()
+    return jsonify(public_state())
+
+
+@app.post("/api/host/next-question")
+def api_next_question():
+    game["question_index"] += 1
+    game["question"] = None
+    game["revealed_answers"] = 0
+    game["correct_answer"] = None
+    game["timer_end"] = None
+    game["scored"] = False
+    game["phase"] = "finished" if game["question_index"] >= len(questions_list) else "lobby"
+    return jsonify(public_state())
+
+
+@app.post("/api/host/advance")
+def api_advance():
+    refresh_timer()
+    if not game["question"]:
+        show_question()
+    elif game["revealed_answers"] < len(game["question"]["answers"]):
+        if game["phase"] not in ("timer", "review", "finished"):
+            total_answers = len(game["question"]["answers"])
+            game["revealed_answers"] = min(total_answers, game["revealed_answers"] + 1)
+    elif game["phase"] not in ("timer", "timer_done", "review"):
+        game["phase"] = "timer"
+        game["timer_end"] = time.time() + int(game["question"]["timer"])
+    elif game["phase"] in ("timer", "timer_done"):
+        show_correct_answer()
+    else:
+        game["question_index"] += 1
+        game["question"] = None
+        game["revealed_answers"] = 0
+        game["correct_answer"] = None
+        game["timer_end"] = None
+        game["scored"] = False
+        game["phase"] = "finished" if game["question_index"] >= len(questions_list) else "lobby"
+    return jsonify(public_state())
+
+
+@app.post("/api/player/join")
+def api_player_join():
+    data = request.get_json(force=True)
+    player_id = (data.get("playerId") or "").strip()
+    name = (data.get("name") or "").strip()
+    code = (data.get("code") or "").strip().upper()
+
+    if not player_id or not name:
+        return jsonify({"ok": False, "message": "צריך להכניס שם."}), 400
+    if code != game["code"]:
+        return jsonify({"ok": False, "message": "קוד המשחק לא נכון."}), 400
+
+    game["players"][player_id] = {
+        "name": name,
+        "score": game["players"].get(player_id, {}).get("score", 0),
+        "answer": None,
+    }
+    return jsonify({"ok": True, "state": public_state()})
+
+
+@app.post("/api/player/answer")
+def api_player_answer():
+    refresh_timer()
+    data = request.get_json(force=True)
+    player_id = (data.get("playerId") or "").strip()
+    answer = data.get("answer")
+    player = game["players"].get(player_id)
+
+    if not player or game["phase"] != "timer" or player["answer"] is not None:
+        return jsonify(public_state())
+
+    visible_answers = game["question"]["answers"][: game["revealed_answers"]]
+    if answer in visible_answers:
+        player["answer"] = answer
+
+    return jsonify(public_state())
+
+
+if __name__ == "__main__":
+    ip = get_local_ip()
+    port = int(os.environ.get("PORT", 5000))
+    print("Host screen:   http://localhost:5000/host")
+    print("Player screen: http://localhost:5000/player")
+    print(f"Phones on Wi-Fi: http://{ip}:{port}/player")
+    app.run(host="0.0.0.0", port=port, debug=False)

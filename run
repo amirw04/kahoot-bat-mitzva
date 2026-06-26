@@ -1,0 +1,44 @@
+איך משתמשים בגרסת Ver03
+=======================
+
+Ver03 מיועדת לגרסה שתעלה לאינטרנט, כדי שהשחקנים יוכלו להיכנס מלינק רגיל
+ולא יהיו תלויים ב-Wi-Fi המקומי של המחשב.
+
+אחרי שהאפליקציה תעלה לשירות hosting, יהיו שתי כתובות:
+
+מסך מנחה:
+
+https://YOUR-SITE/host
+
+מסך שחקנים:
+
+https://YOUR-SITE/player
+
+מה שולחים לשחקנים:
+
+https://YOUR-SITE/player
+
+מה המנחה פותח במחשב:
+
+https://YOUR-SITE/host
+
+פקודת ההרצה שהשרת באינטרנט צריך להריץ:
+
+gunicorn app:app
+
+הקבצים החשובים לפריסה:
+- app.py
+- requirements.txt
+- Procfile
+- DataQuestions.py
+- Config.py
+- templates
+- static
+- images
+
+הערה:
+אם מריצים את Ver03 מקומית לבדיקה, אפשר עדיין להריץ:
+
+.\.venv\Scripts\python.exe app.py
+
+אבל באירוע עצמו עדיף להשתמש בלינק האינטרנטי אחרי הפריסה.

@@ -1,0 +1,34 @@
+איך מריצים את Ver03 באינטרנט
+=============================
+
+המטרה:
+להעלות את האפליקציה לשירות Hosting, ואז כולם נכנסים דרך לינק אינטרנטי רגיל.
+
+כתובות אחרי פריסה:
+
+מסך מנחה:
+https://YOUR-SITE/host
+
+מסך שחקנים:
+https://YOUR-SITE/player
+
+מה צריך להעלות לשירות:
+- app.py
+- DataQuestions.py
+- Config.py
+- requirements.txt
+- Procfile
+- templates
+- static
+- images
+
+פקודת הפעלה לשירות hosting:
+
+gunicorn app:app
+
+הערה:
+בהרצה מקומית עדיין אפשר להריץ:
+
+.\.venv\Scripts\python.exe app.py
+
+אבל באינטרנט השירות יריץ את Procfile או את הפקודה gunicorn app:app.

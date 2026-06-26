@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>מסך משתתף</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/player.js" defer></script>
+</head>
+<body class="player-page">
+  <main class="app-shell narrow">
+    <section id="join-panel" class="panel join-panel">
+      <h1>כניסה למשחק</h1>
+      <label>
+        שם
+        <input id="player-name" type="text" autocomplete="name">
+      </label>
+      <label>
+        קוד משחק
+        <input id="game-code" type="text" maxlength="4" autocomplete="off">
+      </label>
+      <button id="join-button" class="primary-button">כניסה</button>
+      <p id="join-message" class="message error"></p>
+    </section>
+
+    <section id="game-panel" class="panel hidden">
+      <div class="player-header">
+        <div>
+          <h1 id="player-title">ממתינים למנחה</h1>
+          <p id="player-status">עוד רגע מתחילים.</p>
+        </div>
+        <strong id="player-timer">--</strong>
+      </div>
+      <h2 id="question-text"></h2>
+      <img id="question-image" class="question-image hidden" alt="תמונת שאלה">
+      <div id="answers-list" class="answers-grid"></div>
+      <p id="answer-message" class="message"></p>
+      <p id="score-message" class="message strong"></p>
+    </section>
+  </main>
+</body>
+</html>

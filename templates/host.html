@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>מסך מנחה</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/host.js" defer></script>
+</head>
+<body class="host-page">
+  <main class="app-shell">
+    <section class="top-bar">
+      <div>
+        <h1>מסך מנחה</h1>
+        <p>קוד משחק: <strong id="game-code">----</strong></p>
+      </div>
+      <div class="status-box">
+        <span id="phase-label">ממתין</span>
+        <strong id="timer-label">--</strong>
+      </div>
+    </section>
+
+    <section class="host-grid">
+      <div class="panel main-panel">
+        <div class="question-meta">
+          <span id="question-count">שאלה 0 מתוך 0</span>
+          <button id="advance-button" class="primary-button">המשך</button>
+        </div>
+        <h2 id="question-text">לחץ "הצג שאלה" כדי להתחיל.</h2>
+        <img id="question-image" class="question-image hidden" alt="תמונת שאלה">
+        <div id="answers-list" class="answers-grid"></div>
+      </div>
+
+      <aside class="panel controls-panel">
+        <button id="new-game-button">משחק חדש</button>
+        <button id="show-question-button">הצג שאלה</button>
+        <button id="reveal-answer-button">הצג תשובה הבאה</button>
+        <button id="start-timer-button">התחל טיימר</button>
+        <button id="show-correct-button">הצג תשובה נכונה</button>
+        <button id="next-question-button">שאלה הבאה</button>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <h2>משתתפים וניקוד</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>שם</th>
+            <th>ניקוד</th>
+            <th>ענה?</th>
+          </tr>
+        </thead>
+        <tbody id="players-table"></tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>
