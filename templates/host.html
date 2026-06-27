@@ -13,6 +13,10 @@
       <div>
         <h1>מסך מנחה</h1>
         <p>קוד משחק: <strong id="game-code">----</strong></p>
+        <label class="quiz-picker">
+          שאלון
+          <select id="quiz-select"></select>
+        </label>
       </div>
       <div class="status-box">
         <span id="phase-label">ממתין</span>
@@ -27,7 +31,7 @@
           <button id="advance-button" class="primary-button">המשך</button>
         </div>
         <h2 id="question-text">לחץ "הצג שאלה" כדי להתחיל.</h2>
-        <img id="question-image" class="question-image hidden" alt="תמונת שאלה">
+        <div id="question-images" class="question-images hidden"></div>
         <div id="answers-list" class="answers-grid"></div>
       </div>
 
@@ -46,6 +50,7 @@
       <table>
         <thead>
           <tr>
+            <th>מקום</th>
             <th>שם</th>
             <th>ניקוד</th>
             <th>ענה?</th>

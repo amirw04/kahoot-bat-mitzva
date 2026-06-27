@@ -6,15 +6,16 @@ import os
 
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
-from DataQuestions import questions_list
+from DataQuestions import questionnaires
 
 
 app = Flask(__name__)
+DEFAULT_QUIZ_KEY = next(iter(questionnaires))
 
 
 def make_game_code():
     letters = string.ascii_uppercase.replace("I", "").replace("O", "")
-    return "".join(random.choice(letters + "23456789") for _ in range(4))
+    return "".join(random.choice("123456789") for _ in range(2))
 
 
 def get_local_ip():
@@ -28,27 +29,84 @@ def get_local_ip():
         return "localhost"
 
 
-def make_question_payload(question, number):
-    answers = list(question.AnsF) + [question.AnsT]
+def as_list(value):
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple, set)):
+        return list(value)
+    return [value]
+
+
+def correct_answers_for(question):
+    return as_list(question.AnsT)
+
+
+def quiz_options():
+    return [
+        {"key": key, "name": quiz.name, "total": len(quiz.questions)}
+        for key, quiz in questionnaires.items()
+    ]
+
+
+def questions_for(quiz_key):
+    return questionnaires[quiz_key].questions
+
+
+def current_questions():
+    return questions_for(game["quiz_key"])
+
+
+def arrange_answers(answers, mandatory_position):
     random.shuffle(answers)
+    if not mandatory_position:
+        return answers
+
+    arranged = [None] * len(answers)
+    answer_pool = list(answers)
+
+    for answer, position in sorted(mandatory_position.items(), key=lambda item: item[1]):
+        if answer not in answer_pool:
+            continue
+        index = int(position) - 1
+        if index < 0 or index >= len(arranged) or arranged[index] is not None:
+            continue
+        arranged[index] = answer
+        answer_pool.remove(answer)
+
+    for index, existing_answer in enumerate(arranged):
+        if existing_answer is None and answer_pool:
+            arranged[index] = answer_pool.pop(0)
+
+    return arranged
+
+
+def make_question_payload(question, number):
+    correct_answers = correct_answers_for(question)
+    answers = list(question.AnsF) + correct_answers
+    answers = arrange_answers(answers, question.MandatoryPosition)
     return {
         "number": number,
         "text": question.Qstn,
         "answers": answers,
+        "answerImages": question.AnswerImages,
+        "allowMultiple": len(correct_answers) > 1,
         "image": question.Image,
+        "questionImages": question.QuestionImages,
         "timer": question.Timer,
     }
 
 
-def new_game():
+def new_game(quiz_key=None):
+    selected_quiz_key = quiz_key if quiz_key in questionnaires else DEFAULT_QUIZ_KEY
     return {
+        "quiz_key": selected_quiz_key,
         "code": make_game_code(),
         "players": {},
         "question_index": 0,
         "question": None,
         "revealed_answers": 0,
         "phase": "lobby",
-        "correct_answer": None,
+        "correct_answers": [],
         "timer_end": None,
         "scored": False,
     }
@@ -71,14 +129,20 @@ def refresh_timer():
 
 def public_state():
     refresh_timer()
+    quiz_key = game["quiz_key"]
+    quiz = questionnaires[quiz_key]
     return {
         "code": game["code"],
+        "quizKey": quiz_key,
+        "quizName": quiz.name,
+        "quizzes": quiz_options(),
         "phase": game["phase"],
         "questionIndex": game["question_index"],
-        "totalQuestions": len(questions_list),
+        "totalQuestions": len(quiz.questions),
         "question": game["question"],
         "revealedAnswers": game["revealed_answers"],
-        "correctAnswer": game["correct_answer"],
+        "correctAnswer": game["correct_answers"][0] if len(game["correct_answers"]) == 1 else None,
+        "correctAnswers": game["correct_answers"],
         "remainingSeconds": remaining_seconds(),
         "players": [
             {
@@ -99,16 +163,17 @@ def reset_player_answers():
 
 
 def show_question():
-    if game["question_index"] >= len(questions_list):
+    questions = current_questions()
+    if game["question_index"] >= len(questions):
         game["phase"] = "finished"
         game["question"] = None
         return
 
-    question = questions_list[game["question_index"]]
+    question = questions[game["question_index"]]
     game["question"] = make_question_payload(question, game["question_index"] + 1)
     game["revealed_answers"] = 0
     game["phase"] = "question"
-    game["correct_answer"] = None
+    game["correct_answers"] = []
     game["timer_end"] = None
     game["scored"] = False
     reset_player_answers()
@@ -118,17 +183,20 @@ def show_correct_answer():
     if not game["question"]:
         return
 
-    question = questions_list[game["question_index"]]
+    question = current_questions()[game["question_index"]]
     game["phase"] = "review"
     game["timer_end"] = None
-    game["correct_answer"] = question.AnsT
+    game["correct_answers"] = correct_answers_for(question)
 
     if game["scored"]:
         return
 
+    correct_set = set(game["correct_answers"])
+    points_per_correct = 1 / len(correct_set) if correct_set else 0
     for player in game["players"].values():
-        if player["answer"] == question.AnsT:
-            player["score"] += 1
+        selected = set(as_list(player["answer"]))
+        player_points = len(selected & correct_set) * points_per_correct
+        player["score"] = round(player["score"] + min(1, player_points), 2)
     game["scored"] = True
 
 
@@ -159,8 +227,21 @@ def api_state():
 
 @app.post("/api/host/new-game")
 def api_new_game():
+    data = request.get_json(silent=True) or {}
+    quiz_key = data.get("quizKey") or game["quiz_key"]
     game.clear()
-    game.update(new_game())
+    game.update(new_game(quiz_key))
+    return jsonify(public_state())
+
+
+@app.post("/api/host/select-quiz")
+def api_select_quiz():
+    data = request.get_json(force=True)
+    quiz_key = data.get("quizKey")
+    if quiz_key not in questionnaires:
+        return jsonify({"ok": False, "message": "שאלון לא מוכר."}), 400
+    game.clear()
+    game.update(new_game(quiz_key))
     return jsonify(public_state())
 
 
@@ -194,13 +275,14 @@ def api_show_correct():
 
 @app.post("/api/host/next-question")
 def api_next_question():
+    questions = current_questions()
     game["question_index"] += 1
     game["question"] = None
     game["revealed_answers"] = 0
-    game["correct_answer"] = None
+    game["correct_answers"] = []
     game["timer_end"] = None
     game["scored"] = False
-    game["phase"] = "finished" if game["question_index"] >= len(questions_list) else "lobby"
+    game["phase"] = "finished" if game["question_index"] >= len(questions) else "lobby"
     return jsonify(public_state())
 
 
@@ -219,13 +301,14 @@ def api_advance():
     elif game["phase"] in ("timer", "timer_done"):
         show_correct_answer()
     else:
+        questions = current_questions()
         game["question_index"] += 1
         game["question"] = None
         game["revealed_answers"] = 0
-        game["correct_answer"] = None
+        game["correct_answers"] = []
         game["timer_end"] = None
         game["scored"] = False
-        game["phase"] = "finished" if game["question_index"] >= len(questions_list) else "lobby"
+        game["phase"] = "finished" if game["question_index"] >= len(questions) else "lobby"
     return jsonify(public_state())
 
 
@@ -254,15 +337,22 @@ def api_player_answer():
     refresh_timer()
     data = request.get_json(force=True)
     player_id = (data.get("playerId") or "").strip()
-    answer = data.get("answer")
+    answers = data.get("answers")
+    if answers is None:
+        answers = as_list(data.get("answer"))
     player = game["players"].get(player_id)
 
     if not player or game["phase"] != "timer" or player["answer"] is not None:
         return jsonify(public_state())
 
     visible_answers = game["question"]["answers"][: game["revealed_answers"]]
-    if answer in visible_answers:
-        player["answer"] = answer
+    selected_answers = []
+    for answer in as_list(answers):
+        if answer in visible_answers and answer not in selected_answers:
+            selected_answers.append(answer)
+
+    if selected_answers:
+        player["answer"] = selected_answers
 
     return jsonify(public_state())
 
