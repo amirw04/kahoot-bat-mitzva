@@ -1,4 +1,4 @@
-import random
+﻿import random
 import socket
 import string
 import time
@@ -215,6 +215,11 @@ def player():
     return render_template("player.html")
 
 
+
+
+@app.route("/public")
+def public():
+    return render_template("public.html")
 @app.route("/images/<path:filename>")
 def images(filename):
     return send_from_directory("images", filename)
@@ -362,5 +367,6 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print("Host screen:   http://localhost:5000/host")
     print("Player screen: http://localhost:5000/player")
+    print("Public screen: http://localhost:5000/public")
     print(f"Phones on Wi-Fi: http://{ip}:{port}/player")
     app.run(host="0.0.0.0", port=port, debug=False)
