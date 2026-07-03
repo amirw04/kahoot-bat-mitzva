@@ -98,7 +98,7 @@ function renderQuestion(state, me) {
     el.playerTitle.textContent = state.phase === "finished" ? "המשחק הסתיים" : "ממתינים למנחה";
     el.playerStatus.textContent = state.phase === "finished" ? "כל הכבוד!" : "עוד רגע מתחילים.";
     el.questionText.textContent = "";
-    renderQuestionImages(null);
+    renderQuestionImages(state, null);
     el.submitAnswer.classList.add("hidden");
     return;
   }
@@ -106,7 +106,7 @@ function renderQuestion(state, me) {
   el.playerTitle.textContent = `שאלה ${question.number}`;
   el.playerStatus.textContent = statusText(state, me);
   el.questionText.textContent = question.text;
-  renderQuestionImages(question);
+  renderQuestionImages(state, question);
 
   const savedAnswers = normalizeAnswers(me.answer);
   const correctAnswers = normalizeAnswers(state.correctAnswers);
@@ -123,6 +123,7 @@ function renderQuestion(state, me) {
       button.classList.add("hidden-answer");
     } else {
       fillAnswerButton(button, question, answer);
+      applyAnswerColor(button, question, answer);
     }
     if (isPicked) {
       button.classList.add("picked");
@@ -147,10 +148,14 @@ function renderQuestion(state, me) {
   }
 }
 
-function renderQuestionImages(question) {
+function renderQuestionImages(state, question) {
   el.questionImages.innerHTML = "";
   const images = question
-    ? [...(question.questionImages || []), ...(question.image ? [question.image] : [])]
+    ? [
+        ...(question.questionImages || []),
+        ...(question.image ? [question.image] : []),
+        ...(state.phase === "review" ? question.correctImages || [] : []),
+      ]
     : [];
   if (!images.length) {
     el.questionImages.classList.add("hidden");
@@ -170,6 +175,7 @@ function fillAnswerButton(button, question, answer) {
   button.textContent = "";
   const imageName = question.answerImages ? question.answerImages[answer] : null;
   if (imageName) {
+    button.classList.add("has-answer-image");
     const image = document.createElement("img");
     image.src = `/images/${imageName}`;
     image.alt = answer;
@@ -179,6 +185,29 @@ function fillAnswerButton(button, question, answer) {
   const label = document.createElement("span");
   label.textContent = answer;
   button.appendChild(label);
+}
+
+function applyAnswerColor(element, question, answer) {
+  const color = question.answerColors ? question.answerColors[answer] : null;
+  if (!Array.isArray(color) || color.length !== 3) {
+    return;
+  }
+
+  const [red, green, blue] = color.map((value) => Math.round(Number(value) * 255));
+  if (element.classList.contains("has-answer-image")) {
+    element.style.borderColor = `rgb(${red}, ${green}, ${blue})`;
+    element.style.setProperty("--answer-accent", `rgb(${red}, ${green}, ${blue})`);
+    element.style.color = "#111827";
+    return;
+  }
+
+  element.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+  element.style.color = textColorForRgb(red, green, blue);
+}
+
+function textColorForRgb(red, green, blue) {
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+  return luminance > 0.58 ? "#111827" : "#ffffff";
 }
 
 function toggleAnswer(answer, allowMultiple) {

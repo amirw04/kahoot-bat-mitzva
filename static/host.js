@@ -93,12 +93,12 @@ function renderQuestion(state) {
   if (!question) {
     el.questionText.textContent =
       state.phase === "finished" ? "המשחק הסתיים." : "לחץ \"הצג שאלה\" כדי להתחיל.";
-    renderQuestionImages(null);
+    renderQuestionImages(state, null);
     return;
   }
 
   el.questionText.textContent = question.text;
-  renderQuestionImages(question);
+  renderQuestionImages(state, question);
 
   const correctAnswers = Array.isArray(state.correctAnswers) ? state.correctAnswers : [];
 
@@ -112,6 +112,7 @@ function renderQuestion(state) {
       button.classList.add("hidden-answer");
     } else {
       fillAnswerButton(button, question, answer);
+      applyAnswerColor(button, question, answer);
     }
     if (correctAnswers.includes(answer)) {
       button.classList.add("correct");
@@ -120,10 +121,14 @@ function renderQuestion(state) {
   });
 }
 
-function renderQuestionImages(question) {
+function renderQuestionImages(state, question) {
   el.questionImages.innerHTML = "";
   const images = question
-    ? [...(question.questionImages || []), ...(question.image ? [question.image] : [])]
+    ? [
+        ...(question.questionImages || []),
+        ...(question.image ? [question.image] : []),
+        ...(state.phase === "review" ? question.correctImages || [] : []),
+      ]
     : [];
   if (!images.length) {
     el.questionImages.classList.add("hidden");
@@ -143,6 +148,7 @@ function fillAnswerButton(button, question, answer) {
   button.textContent = "";
   const imageName = question.answerImages ? question.answerImages[answer] : null;
   if (imageName) {
+    button.classList.add("has-answer-image");
     const image = document.createElement("img");
     image.src = `/images/${imageName}`;
     image.alt = answer;
@@ -152,6 +158,29 @@ function fillAnswerButton(button, question, answer) {
   const label = document.createElement("span");
   label.textContent = answer;
   button.appendChild(label);
+}
+
+function applyAnswerColor(element, question, answer) {
+  const color = question.answerColors ? question.answerColors[answer] : null;
+  if (!Array.isArray(color) || color.length !== 3) {
+    return;
+  }
+
+  const [red, green, blue] = color.map((value) => Math.round(Number(value) * 255));
+  if (element.classList.contains("has-answer-image")) {
+    element.style.borderColor = `rgb(${red}, ${green}, ${blue})`;
+    element.style.setProperty("--answer-accent", `rgb(${red}, ${green}, ${blue})`);
+    element.style.color = "#111827";
+    return;
+  }
+
+  element.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+  element.style.color = textColorForRgb(red, green, blue);
+}
+
+function textColorForRgb(red, green, blue) {
+  const luminance = (0.299 * red + 0.587 * green + 0.114 * blue) / 255;
+  return luminance > 0.58 ? "#111827" : "#ffffff";
 }
 
 function renderPlayers(players) {

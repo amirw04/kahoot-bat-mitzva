@@ -1,20 +1,70 @@
 ﻿import random
+import importlib.util
 import socket
-import string
 import time
 import os
+from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
-from DataQuestions import questionnaires
-
-
 app = Flask(__name__)
+DATAQ_PATTERN = "DataQ_*.py"
+"""
+DEFAULT_ANSWER_COLORS = [
+    [0.835, 0.247, 0.247],  # red
+    [0.137, 0.455, 0.671],  # blue
+    [0.851, 0.604, 0.118],  # gold
+    [0.180, 0.616, 0.345],  # green
+    [0.486, 0.227, 0.929],  # purple
+    [0.059, 0.463, 0.431],  # teal
+]
+"""
+DEFAULT_ANSWER_COLORS = [
+    [0.8, 0.1, 0.0], # red  
+    [0.0, 0.1, 0.8], # blue   
+    [1.0, 1.0, 0.0], # yellow 
+    [0.0, 0.7, 0.0], # green
+    [0.0, 0.4, 0.4], # teal
+    [0.9, 0.0, 0.9], # purple
+    [0.85, 0.85, 0.85], # gray
+    [0.0, 0.0, 0.0], # black
+]
+
+
+def load_questionnaires():
+    loaded_questionnaires = {}
+    base_path = Path(__file__).resolve().parent
+
+    for dataq_path in sorted(base_path.glob(DATAQ_PATTERN)):
+        module_name = dataq_path.stem
+        spec = importlib.util.spec_from_file_location(module_name, dataq_path)
+        if spec is None or spec.loader is None:
+            continue
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        module_questionnaires = getattr(module, "questionnaires", None)
+        if not module_questionnaires:
+            continue
+
+        for key, quiz in module_questionnaires.items():
+            unique_key = key
+            if unique_key in loaded_questionnaires:
+                unique_key = f"{module_name}_{key}"
+            loaded_questionnaires[unique_key] = quiz
+
+    if not loaded_questionnaires:
+        raise RuntimeError(f"No questionnaires were found in {DATAQ_PATTERN}")
+
+    return loaded_questionnaires
+
+
+questionnaires = load_questionnaires()
 DEFAULT_QUIZ_KEY = next(iter(questionnaires))
 
 
 def make_game_code():
-    letters = string.ascii_uppercase.replace("I", "").replace("O", "")
     return "".join(random.choice("123456789") for _ in range(2))
 
 
@@ -38,7 +88,7 @@ def as_list(value):
 
 
 def correct_answers_for(question):
-    return as_list(question.AnsT)
+    return [answer.Text for answer in question.Answers if answer.IsCrct]
 
 
 def quiz_options():
@@ -56,18 +106,20 @@ def current_questions():
     return questions_for(game["quiz_key"])
 
 
-def arrange_answers(answers, mandatory_position):
+def arrange_answers(answers):
     random.shuffle(answers)
-    if not mandatory_position:
+    if not any(answer.MandatoryPosition is not None for answer in answers):
         return answers
 
     arranged = [None] * len(answers)
     answer_pool = list(answers)
 
-    for answer, position in sorted(mandatory_position.items(), key=lambda item: item[1]):
-        if answer not in answer_pool:
-            continue
-        index = int(position) - 1
+    positioned_answers = sorted(
+        (answer for answer in answers if answer.MandatoryPosition is not None),
+        key=lambda answer: answer.MandatoryPosition,
+    )
+    for answer in positioned_answers:
+        index = int(answer.MandatoryPosition) - 1
         if index < 0 or index >= len(arranged) or arranged[index] is not None:
             continue
         arranged[index] = answer
@@ -82,16 +134,27 @@ def arrange_answers(answers, mandatory_position):
 
 def make_question_payload(question, number):
     correct_answers = correct_answers_for(question)
-    answers = list(question.AnsF) + correct_answers
-    answers = arrange_answers(answers, question.MandatoryPosition)
+    answers = arrange_answers(list(question.Answers))
+    answer_colors = {}
+    for index, answer in enumerate(answers):
+        answer_colors[answer.Text] = (
+            answer.Color
+            if answer.Color is not None
+            else DEFAULT_ANSWER_COLORS[index % len(DEFAULT_ANSWER_COLORS)]
+        )
+
     return {
         "number": number,
         "text": question.Qstn,
-        "answers": answers,
-        "answerImages": question.AnswerImages,
+        "answers": [answer.Text for answer in answers],
+        "answerImages": {
+            answer.Text: answer.Image for answer in answers if answer.Image is not None
+        },
+        "answerColors": answer_colors,
         "allowMultiple": len(correct_answers) > 1,
         "image": question.Image,
         "questionImages": question.QuestionImages,
+        "correctImages": question.CorrectImages,
         "timer": question.Timer,
     }
 
@@ -191,13 +254,34 @@ def show_correct_answer():
     if game["scored"]:
         return
 
-    correct_set = set(game["correct_answers"])
-    points_per_correct = 1 / len(correct_set) if correct_set else 0
     for player in game["players"].values():
-        selected = set(as_list(player["answer"]))
-        player_points = len(selected & correct_set) * points_per_correct
-        player["score"] = round(player["score"] + min(1, player_points), 2)
+        if player["answer"] is None:
+            continue
+
+        question_score = score_player_answer(question, player["answer"])
+        player["score"] = round(player["score"] + question_score, 2)
     game["scored"] = True
+
+
+def score_player_answer(question, player_answer):
+    selected = set(as_list(player_answer))
+    correct_set = set(correct_answers_for(question))
+
+    if len(correct_set) <= 1:
+        return 1 if selected == correct_set else 0
+
+    answer_keys = [answer.Text for answer in question.Answers]
+    if not answer_keys:
+        return 0
+
+    correct_decisions = 0
+    for answer in answer_keys:
+        should_select = answer in correct_set
+        did_select = answer in selected
+        if should_select == did_select:
+            correct_decisions += 1
+
+    return correct_decisions / len(answer_keys)
 
 
 @app.route("/")
