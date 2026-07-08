@@ -513,7 +513,7 @@ Gragamel_Menora = clsQstn(
 
 Amaris_and_Lili = clsQstn(
     Qstn='מיהן "אמאריס ולילי"?',
-    CorrectImages=["DnD_Party_Fix.png"],
+    CorrectImages=["DnD_Party_Fix.jpg"],
     Answers=[
         clsAnswer(
             Text='דמויות ה-D&D של נטע ואיילה.',
