@@ -7,6 +7,7 @@ const el = {
   questionText: document.getElementById("question-text"),
   questionImages: document.getElementById("question-images"),
   answersList: document.getElementById("answers-list"),
+  answeredCount: document.getElementById("answered-count"),
   playersTable: document.getElementById("players-table"),
   advance: document.getElementById("advance-button"),
   newGame: document.getElementById("new-game-button"),
@@ -184,6 +185,9 @@ function textColorForRgb(red, green, blue) {
 }
 
 function renderPlayers(players) {
+  const answered = players.filter((player) => player.answered).length;
+  el.answeredCount.textContent = `ענו ${answered} מתוך ${players.length}`;
+
   if (!players.length) {
     el.playersTable.innerHTML = "<tr><td colspan=\"4\">אין משתתפים עדיין</td></tr>";
     return;

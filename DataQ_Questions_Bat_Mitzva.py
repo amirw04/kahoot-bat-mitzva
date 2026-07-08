@@ -13,7 +13,7 @@ Kama_Netas_Best_Freind = clsQstn(
             IsCrct=False,
         ),
         clsAnswer(
-            Text='שחר',
+            Text='נטלי',
             IsCrct=False,
         ),
         clsAnswer(
@@ -71,6 +71,7 @@ ShuinGruins_Family = clsQstn(
 
 ShuinGruins_House = clsQstn(
     Qstn='ואיך נראה הבית שלה?',
+    CorrectImages=["Shuin_Gruins_House.jpg"],
     Answers=[
         clsAnswer(
             Text='על עץ, עם מדרגות מסתובבות',
@@ -98,9 +99,10 @@ ShuinGruins_House = clsQstn(
 
 Persi_Jackson = clsQstn(
     Qstn='מה הקשר בין איילה לפרסאוס',
+    CorrectImages=["Persi_Jackson.jpg"],
     Answers=[
         clsAnswer(
-            Text="פרסאוס הוא פרסי ג'קסון, שאיתו היא מבלה הרבה זמן.",
+            Text="פרסאוס הוא 'פרסי ג'קסון' - גיבור סדרת ספרים שאיילה אוהבת לקרוא.",
             IsCrct=True,
         ),
         clsAnswer(
@@ -122,18 +124,30 @@ Who_is_Green_Monster = clsQstn(
     Qstn='מי מהבאות היא "מפלצת ירוקה"',
     Answers=[
         clsAnswer(
+            MandatoryPosition=1,
+            Color=[0.4, 0.6, 0.7],
+            Image=["Hau_Hau.jpg"],
             Text='תמונה 1',
-            IsCrct=True,
-        ),
-        clsAnswer(
-            Text='תמונה 2',
             IsCrct=False,
         ),
         clsAnswer(
+            MandatoryPosition=2,
+            Color=[0.4, 0.6, 0.7],
+            Image=["Green_Monster_True.jpg"],
+            Text='תמונה 2',
+            IsCrct=True,
+        ),
+        clsAnswer(
+            MandatoryPosition=3,
+            Color=[0.4, 0.6, 0.7],
+            Image=["Green_Monster_False.jpg"],
             Text='תמונה 3',
             IsCrct=False,
         ),
         clsAnswer(
+            MandatoryPosition=4,
+            Color=[0.4, 0.6, 0.7],
+            Image=["GaGa.jpg"],
             Text='תמונה 4',
             IsCrct=False,
         ),
@@ -144,19 +158,23 @@ Adi_GreenMonsters_Freind = clsQstn(
     Qstn='ומה שמה של חברתה הקרובה ביותר',
     Answers=[
         clsAnswer(
-            Text='עדי (תמונה)',
+            Image=["Adi.jpg"],
+            Text='עדי',
             IsCrct=True,
         ),
         clsAnswer(
-            Text='תותית (תמונה)',
+            Image=["Zelig.jpg"],
+            Text='זליג',
             IsCrct=False,
         ),
         clsAnswer(
-            Text='עכברונת (תמונה)',
+            Image=["Rikko.jpg"],
+            Text='עכברונת',
             IsCrct=False,
         ),
         clsAnswer(
-            Text='מוף-מופה (תמונה)',
+            Image=["Muff_Muff.jpg"],
+            Text='מוף-מופונת',
             IsCrct=False,
         ),
     ],
@@ -165,6 +183,7 @@ Adi_GreenMonsters_Freind = clsQstn(
 
 Ayalas_Long_Lived_Dress = clsQstn(
     Qstn='במה מפורסמת השמלה הבאה',
+    QuestionImages=["AyalaDressA.JPG"],
     Answers=[
         clsAnswer(
             Text='השמלה שימשה את איילה משך שנים רבות - הרבה מעבר למה שמתאים.....',
@@ -187,6 +206,7 @@ Ayalas_Long_Lived_Dress = clsQstn(
 
 What_Neta_Dress_Age_4 = clsQstn(
     Qstn='נטע בת שלוש - מה הגיוני שתלבש',
+    CorrectImages=["Neta_Yellow.jpg"],
     Answers=[
         clsAnswer(
             Text='שמלה צהובה, המון סיכות ראש וגרביים שחור לבן.',
@@ -236,6 +256,7 @@ Ayalas_Favors_Cats = clsQstn(
 
 Ayala_was_a_Cat = clsQstn(
     Qstn='בעברה הייתה איילה חתול - איזה חתול?',
+    CorrectImages=["GingerCat.jpg"],
     Answers=[
         clsAnswer(
             Text= "תשובות 1 ו-3 (ג'ינג'י וסגול) נכונות",
@@ -314,7 +335,8 @@ Ayala_Corona_Mask = clsQstn(
 )
 
 Gaga_Dipers = clsQstn(
-    Qstn='מה זה גגה',
+    Qstn='?מה זה גגה',
+    CorrectImages=["Gaga_Dipper.jpg", "GaGa.jpg"],
     Answers=[
         clsAnswer(
             Text='חיתול עם ציור של דג.',
@@ -339,8 +361,13 @@ Six_on_the_Dice = clsQstn(
     Qstn='לאיילה יש מצב שמכונה "שש בקוביה" - מה מהדברים הבאים לא קרה במסגרתו?',
     Answers=[
         clsAnswer(
-            Text='פתחה את דלת האוטו בספארי, והלכה "ללטף זברה".',
+            Text="ניסתה להרים מדוזה",
             IsCrct=True,
+            Color=[0.9, 0.9, 0.8]
+        ),    
+        clsAnswer(
+            Text="ליטפה זברה דרך חלון האוטו בספארי",
+            IsCrct=False,
             Color=[0.4, 0.4, 0.4]
         ),
         clsAnswer(
@@ -373,6 +400,11 @@ Six_on_the_Dice = clsQstn(
             IsCrct=False,
             Color=[0.0, 0.0, 0.0]
         ),
+        clsAnswer(
+            Text="הפרידה את האוכל בקערה של יסמין (החתולה)  לפי הצבעים השונים.",
+            IsCrct=False,
+            Color=[1.0, 0.4, 0.0]
+        ),        
         clsAnswer(
             Text='קפצה לבריכת מים כי "הדגים קראו לה".',
             IsCrct=False,
@@ -452,10 +484,11 @@ Favorate_Podcast_Is = clsQstn(
 )
 
 Gragamel_Menora = clsQstn(
+    CorrectImages=["Gargamel.jpg"],
     Qstn='באיזה הקשר נטע, איילה ועומר אוזכרו בפודקאסט',
     Answers=[
         clsAnswer(
-            Text='הן שמצאו את המנורה של גרגמל.',
+            Text='הן שמצאו את החנוכיה של גרגמל.',
             IsCrct=True,
             MandatoryPosition=3,
         ),
@@ -480,6 +513,7 @@ Gragamel_Menora = clsQstn(
 
 Amaris_and_Lili = clsQstn(
     Qstn='מיהן "אמאריס ולילי"?',
+    CorrectImages=["DnD_Party_Fix.png"],
     Answers=[
         clsAnswer(
             Text='דמויות ה-D&D של נטע ואיילה.',
@@ -502,6 +536,7 @@ Amaris_and_Lili = clsQstn(
 
 Ain_and_Kleps = clsQstn(
     Qstn='ומיהם "עין וקלפס"',
+    CorrectImages=["AinKleps3.JPG"],
     Answers=[
         clsAnswer(
             Text='נטע ואיילה בנות 4, רק כשהן רוכבות על אופני איזון!',

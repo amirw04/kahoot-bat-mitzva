@@ -265,4 +265,4 @@ function formatScore(score) {
   return Number.isInteger(score) ? String(score) : String(score).replace(/\.0$/, "");
 }
 
-setInterval(loadState, 500);
+setInterval(loadState, 1000);

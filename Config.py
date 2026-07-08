@@ -1,1 +1,1 @@
-TimerDuration = 30
+TimerDuration = 60

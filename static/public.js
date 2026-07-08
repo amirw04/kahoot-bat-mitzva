@@ -138,7 +138,7 @@ function renderTopPlayers(players) {
   const topPlayers = players
     .slice()
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "he"))
-    .slice(0, 5);
+    .slice(0, 10);
 
   if (!topPlayers.length) {
     el.topPlayers.innerHTML = "<li class=\"empty-place\">אין משתתפים עדיין</li>";

@@ -86,6 +86,23 @@ p {
   gap: 16px;
 }
 
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-header h2 {
+  margin-bottom: 0;
+}
+
+.answer-count {
+  color: var(--muted);
+  font-size: 18px;
+  white-space: nowrap;
+}
+
 .status-box {
   min-width: 150px;
   padding: 12px;
@@ -285,7 +302,8 @@ th {
 
   .top-bar,
   .player-header,
-  .question-meta {
+  .question-meta,
+  .section-header {
     align-items: stretch;
     flex-direction: column;
   }
