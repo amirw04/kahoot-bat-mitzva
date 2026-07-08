@@ -67,9 +67,9 @@ Israeli_Prime_Ministers = clsQstn(
     AnsF=["לוי אשכול", "דוד בן גוריון", "אהוד אולמרט"],
     AnswerImages={
         "משה דיין": "Dayan.png",
-        "לוי אשכול": "Eshcol.jpeg",
-        "דוד בן גוריון": "BenGurion.jpeg",
-        "אהוד אולמרט": "Olmert.jpeg",
+        "לוי אשכול": "Eshcol.jpg",
+        "דוד בן גוריון": "BenGurion.jpg",
+        "אהוד אולמרט": "Olmert.jpg",
     },
 )
 
@@ -109,8 +109,8 @@ Highest_Mountain = clsQstn(
     AnsT="הר חרמון",
     AnsF=["הר תבור", "הר הכרמל", "הר מירון"],
     prevQstn=Lowest_Place,
-    QuestionImages=["Hermon1.jpeg"],
-    CorrectImages=["Hermon2.jpeg"],
+    QuestionImages=["Hermon1.jpg"],
+    CorrectImages=["Hermon2.jpg"],
     MandatoryPosition={
         "הר תבור": 1,
         "הר הכרמל": 2,

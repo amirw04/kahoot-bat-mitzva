@@ -183,7 +183,7 @@ Adi_GreenMonsters_Freind = clsQstn(
 
 Ayalas_Long_Lived_Dress = clsQstn(
     Qstn='במה מפורסמת השמלה הבאה',
-    QuestionImages=["AyalaDressA.JPG"],
+    QuestionImages=["AyalaDressA.jpg"],
     Answers=[
         clsAnswer(
             Text='השמלה שימשה את איילה משך שנים רבות - הרבה מעבר למה שמתאים.....',
@@ -536,7 +536,7 @@ Amaris_and_Lili = clsQstn(
 
 Ain_and_Kleps = clsQstn(
     Qstn='ומיהם "עין וקלפס"',
-    CorrectImages=["AinKleps3.JPG"],
+    CorrectImages=["AinKleps3.jpg"],
     Answers=[
         clsAnswer(
             Text='נטע ואיילה בנות 4, רק כשהן רוכבות על אופני איזון!',

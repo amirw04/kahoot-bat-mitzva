@@ -108,7 +108,7 @@ WybrenDragonFamily = clsQstn(
 # שאלה שהתמונה מופיעה מיד
 BeholderImgAtQ = clsQstn(
     Qstn="איזו מפלצת מופיעה בתמונה?",
-    QuestionImages=["Beholder.jpeg"],
+    QuestionImages=["Beholder.jpg"],
     Answers=[
         clsAnswer(
             Text="בהולדר",
@@ -136,12 +136,12 @@ WizardQuestion = clsQstn(
         clsAnswer(
             Text="קוסם",
             IsCrct=True,
-            Image="wizard.jpeg",
+            Image="wizard.jpg",
         ),
         clsAnswer(
             Text="לוחם",
             IsCrct=False,
-            Image="fighter.jpeg",
+            Image="fighter.jpg",
         ),
         clsAnswer(
             Text="נוכל",
@@ -151,7 +151,7 @@ WizardQuestion = clsQstn(
         clsAnswer(
             Text="כוהן",
             IsCrct=False,
-            Image="cleric.jpeg",
+            Image="cleric.jpg",
         ),
     ],
 )
